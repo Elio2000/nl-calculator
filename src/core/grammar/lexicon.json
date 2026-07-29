@@ -1,0 +1,89 @@
+{
+  "$comment": "词表是数据，文法是代码（见 parser.ts）。新增一种说法通常只需在这里加一行。分词按词条长度降序做最长匹配，因此 '除以' 必然先于 '除'、'次方根' 先于 '次方' 命中，无需额外排序逻辑。",
+
+  "$fillerNote": "只剥多字短语与句末虚词。单独的「等于」不在此列——它在方程里是关系符（x平方加一等于零），剥掉就没法解方程了。问句尾「等于几/等于多少」是完整短语，先于它命中。",
+  "fillers": [
+    "请问", "请帮我", "帮我", "麻烦", "请", "算一下", "算算", "计算一下", "计算",
+    "求一下", "结果是", "答案是", "的结果", "结果", "等于几", "等于多少",
+    "是多少", "得多少", "多少", "几", "呢", "吧", "啊", "呀", "嘛", "?", "？", "。", "，", ",", " "
+  ],
+
+  "$intentNote": "方程与微积分的意图词，出现即改走 nerdamer 求解通道。",
+  "intents": {
+    "解方程": "SOLVE", "求解方程": "SOLVE", "解一下方程": "SOLVE",
+    "$solveSuffixNote": "「…等于零的解」这类句尾意图词要连「的」一起收，否则「的」会悬在方程右侧解析不了",
+    "的解": "SOLVE", "的根": "SOLVE", "的答案": "SOLVE", "解": "SOLVE",
+    "求导": "DIFF", "的导数": "DIFF", "导数": "DIFF",
+    "求积分": "INTEGRATE", "积分": "INTEGRATE", "不定积分": "INTEGRATE"
+  },
+
+  "variables": ["x", "y", "z", "X", "Y", "Z", "未知数"],
+
+  "operators": {
+    "加上": "+", "加": "+", "累加": "+",
+    "减去": "-", "减掉": "-", "减": "-",
+    "乘以": "*", "乘上": "*", "乘": "*", "×": "*",
+    "除以": "/", "÷": "/",
+    "取余": "mod", "取模": "mod", "模": "mod",
+    "+": "+", "-": "-", "*": "*", "/": "/"
+  },
+
+  "ambiguousOperators": {
+    "$comment": "裸『除』在数学上是 B/A，口语里常被当成 A/B。不猜，两种都生成候选交给用户选。",
+    "除": ["/", "\\"]
+  },
+
+  "functions": {
+    "正弦": "sin", "sin": "sin",
+    "余弦": "cos", "cos": "cos",
+    "正切": "tan", "tan": "tan",
+    "反正弦": "asin", "arcsin": "asin", "asin": "asin",
+    "反余弦": "acos", "arccos": "acos", "acos": "acos",
+    "反正切": "atan", "arctan": "atan", "atan": "atan",
+    "双曲正弦": "sinh", "sinh": "sinh",
+    "双曲余弦": "cosh", "cosh": "cosh",
+    "双曲正切": "tanh", "tanh": "tanh",
+    "自然对数": "log", "ln": "log",
+    "常用对数": "log10", "lg": "log10", "log": "log10",
+    "log10": "log10", "log2": "log2",
+    "绝对值": "abs", "abs": "abs",
+    "根号": "sqrt", "sqrt": "sqrt"
+  },
+
+  "constants": {
+    "圆周率": "pi", "派": "pi", "pi": "pi", "π": "pi",
+    "自然常数": "e", "自然对数的底": "e", "e": "e",
+    "虚数单位": "i", "i": "i"
+  },
+
+  "keywords": {
+    "$comment": "构式关键词。文法据此做有序前瞻，含义由跟在它后面的词决定，'的' 本身不翻译。",
+    "的": "DE",
+    "次方": "POWER", "次幂": "POWER", "次方根": "NTH_ROOT",
+    "平方根": "SQRT", "立方根": "CBRT",
+    "平方": "SQUARE", "立方": "CUBE",
+    "开平方": "SQRT", "开方": "SQRT", "开": "OPEN_ROOT",
+    "阶乘": "FACTORIAL",
+    "倒数": "RECIPROCAL",
+    "余数": "REMAINDER",
+    "对": "AGAINST",
+    "百分之": "PERCENT_OF", "分之": "FRACTION_OF",
+    "又": "MIXED_FRACTION",
+    "以": "BASE_PREFIX", "为底": "BASE_SUFFIX", "对数": "LOGARITHM",
+    "与": "AND_NOUN", "跟": "AND_NOUN",
+    "和": "SUM_NOUN", "差": "DIFF_NOUN", "积": "PRODUCT_NOUN", "商": "QUOTIENT_NOUN",
+    "倍": "TIMES_NOUN",
+    "度": "DEGREE",
+    "折": "DISCOUNT", "打": "DISCOUNT_PREFIX",
+    "成": "TENTH",
+    "涨了": "INCREASE_BY", "涨": "INCREASE_BY", "增加": "INCREASE_BY", "上涨": "INCREASE_BY",
+    "降了": "DECREASE_BY", "降": "DECREASE_BY", "减少": "DECREASE_BY", "下降": "DECREASE_BY",
+    "负": "NEGATIVE",
+    "再": "THEN", "然后": "THEN", "接着": "THEN",
+    "等于": "EQUALS", "=": "EQUALS", "＝": "EQUALS"
+  },
+
+  "parentheses": {
+    "(": "(", ")": ")", "（": "(", "）": ")", "[": "(", "]": ")", "【": "(", "】": ")"
+  }
+}
