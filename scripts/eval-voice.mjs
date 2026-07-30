@@ -9,29 +9,11 @@
  *
  * 音频用 scripts/make-audio.sh 生成。
  */
+import './lib/ts-source-hooks.mjs'
 import { readFileSync, existsSync } from 'node:fs'
-import { registerHooks } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 import { pipeline, env } from '@huggingface/transformers'
-
-// 与 eval-llm.mjs 同一对 hook：src 的相对 import 不带扩展名、lexicon.json
-// 需要 import attributes，node 的 ESM 解析器都不认，注册后才能加载源码。
-registerHooks({
-  resolve(specifier, context, next) {
-    if (specifier.startsWith('.') && !/\.\w+$/.test(specifier)) {
-      try {
-        return next(`${specifier}.ts`, context)
-      } catch {
-        // 加 .ts 也找不到，就交回默认解析，让它报本来该报的错
-      }
-    }
-    const resolved = next(specifier, context)
-    return resolved.url.endsWith('.json')
-      ? { ...resolved, importAttributes: { type: 'json' } }
-      : resolved
-  },
-})
 
 const { calculate } = await import('../src/core/calculator.ts')
 

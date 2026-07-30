@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin, type ProxyOptions } from 'vite'
 import react from '@vitejs/plugin-react'
+// @ts-expect-error 纯 JS 共享模块（scripts 端也在用），不为它单开一份类型声明
+import { readDeepseekKey, DEEPSEEK_UPSTREAM } from './scripts/lib/deepseek.mjs'
 
 /**
  * 开发期的 LLM 转发代理。
@@ -13,21 +13,8 @@ import react from '@vitejs/plugin-react'
  *
  * 生产预览走 scripts/serve.mjs，护栏更严；这里是同一套约定的开发版。
  */
-const KEY_FILE = fileURLToPath(new URL('.deepseek.key', import.meta.url))
-
-/** 启动时读一次。改了 key 需要重启 dev server——比每请求读盘可预期。 */
-function readApiKey(): string {
-  const fromEnv = process.env.DEEPSEEK_API_KEY?.trim()
-  if (fromEnv) return fromEnv
-  try {
-    // 文件末尾的换行会被原样拼进 Authorization 头，换来一个看不懂的 401，必须 trim
-    return readFileSync(KEY_FILE, 'utf8').trim()
-  } catch {
-    return ''
-  }
-}
-
-const API_KEY = readApiKey()
+/** 启动时读一次（scripts/lib/deepseek.mjs 是 key 与上游地址的唯一出处）。 */
+const API_KEY: string = readDeepseekKey()
 
 /** 缺 key 时的兜底：明确回一个 JSON 错误，而不是把没有认证的请求转出去挨 401。 */
 function missingKeyPlugin(): Plugin {
@@ -47,7 +34,7 @@ function missingKeyPlugin(): Plugin {
 const proxy: Record<string, ProxyOptions> | undefined = API_KEY
   ? {
       '/api/llm': {
-        target: 'https://api.deepseek.com',
+        target: DEEPSEEK_UPSTREAM,
         changeOrigin: true,
         // 只剥掉 /api/llm 这层前缀，/v1/chat/completions 要原样送到上游
         rewrite: (path) => path.replace(/^\/api\/llm/, ''),

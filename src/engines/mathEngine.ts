@@ -8,8 +8,8 @@
  */
 import { create, all, type MathNode } from 'mathjs'
 
-/** 允许出现在规范表达式里的函数。 */
-const ALLOWED_FUNCTIONS = new Set([
+/** 允许出现在规范表达式里的函数。导出是给契约层做「白名单 ⊇ 对外承诺」的一致性测试。 */
+export const ALLOWED_FUNCTIONS = new Set([
   'abs', 'sqrt', 'cbrt', 'nthRoot', 'exp', 'log', 'log10', 'log2',
   'factorial', 'gamma',
   'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'atan2',

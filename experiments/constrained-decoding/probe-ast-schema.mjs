@@ -9,14 +9,9 @@
  * 运行：
  *   node experiments/constrained-decoding/probe-ast-schema.mjs 一加二乘三等于几
  */
-import { existsSync, readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { readDeepseekKey, DEEPSEEK_UPSTREAM } from '../../scripts/lib/deepseek.mjs'
 
-const here = dirname(fileURLToPath(import.meta.url))
-const keyFile = join(here, '../../.deepseek.key')
-const apiKey =
-  process.env.DEEPSEEK_API_KEY || (existsSync(keyFile) ? readFileSync(keyFile, 'utf8').trim() : '')
+const apiKey = readDeepseekKey()
 if (!apiKey) {
   console.error('缺 key：设 DEEPSEEK_API_KEY 或在项目根放 .deepseek.key')
   process.exit(1)
@@ -96,7 +91,7 @@ const body = {
   tool_choice: 'auto',
 }
 
-const res = await fetch('https://api.deepseek.com/v1/chat/completions', {
+const res = await fetch(`${DEEPSEEK_UPSTREAM}/v1/chat/completions`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
   body: JSON.stringify(body),

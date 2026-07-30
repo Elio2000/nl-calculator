@@ -7,7 +7,8 @@
  */
 import { describe, expect, it } from 'vitest'
 import { buildRequest } from './llm'
-import { buildToolsPayload, toToolCall, TOOLS } from './llmTools'
+import { ADVERTISED_FUNCTIONS, buildToolsPayload, toToolCall, TOOLS } from './llmTools'
+import { ALLOWED_FUNCTIONS } from '../engines/mathEngine'
 import type { Settings } from '../state/settings'
 
 const settings: Settings = {
@@ -35,6 +36,14 @@ describe('请求体构造（tools 模式）', () => {
       'integrate',
       'reject',
     ])
+  })
+
+  it('对模型承诺的每个函数都真的在引擎白名单里——契约不许开空头支票', () => {
+    // 反向（白名单比承诺宽）是刻意的：提示词要短。
+    // 正向漂移（承诺了引擎不认的函数）会让模型的合法候选在白名单闸门口枉死。
+    for (const name of ADVERTISED_FUNCTIONS) {
+      expect(ALLOWED_FUNCTIONS.has(name), `承诺了 ${name}，但引擎白名单里没有`).toBe(true)
+    }
   })
 
   it('保留 reject 工具——非数学输入要有诚实的出口，而不是硬凑算式', () => {

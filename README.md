@@ -4,7 +4,7 @@
 
 **说人话，算精确** —— 中文口语进，精确数学出
 
-![tests](https://img.shields.io/badge/tests-488%20passed-brightgreen)
+![tests](https://img.shields.io/badge/tests-489%20passed-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-React%2019%20%2B%20Vite-blue)
 ![engine](https://img.shields.io/badge/%E8%AE%A1%E7%AE%97-mathjs%20%2B%20nerdamer--prime-orange)
 ![llm](https://img.shields.io/badge/LLM-%E5%8F%AA%E7%BF%BB%E8%AF%91%EF%BC%8C%E4%B8%8D%E8%AE%A1%E7%AE%97-red)
@@ -244,7 +244,7 @@ nerdamer 的输出一律当**不可信输入**对待：语法先改写（`nthRoo
 | 词表覆盖 | **元测试机器强制**：每个词条必须有用例，加词不加测试直接红 | 自建 |
 | 构式相邻 | 两两组合边界（「二成一三」类 bug 只活在构式接壤处） | 自建 |
 | 性质测试 | 不变量扫射：任何输入 → 算对 或 明确报错，**绝不静默给错数** | 自建 |
-| 回归棘轮 | 任何人发现的每个 bug 固化为永久用例（现 488 条全绿） | 持续 |
+| 回归棘轮 | 任何人发现的每个 bug 固化为永久用例（现 489 条全绿） | 持续 |
 | 端到端 | 浏览器实测 + LLM 翻译战役 + 语音链路 | 实测 |
 
 ### 外部对抗审阅（Codex）怎么测
@@ -274,7 +274,7 @@ nerdamer 的输出一律当**不可信输入**对待：语法先改写（`nthRoo
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npx vitest run     # 488 个测试
+npx vitest run     # 489 个测试
 ```
 
 克隆下来就能用，代码之外只有两样东西不在仓库里，都不挡路：

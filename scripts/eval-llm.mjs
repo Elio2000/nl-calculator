@@ -7,37 +7,13 @@
  *   node scripts/eval-llm.mjs                                        # 默认 DeepSeek + deepseek-v4-flash
  *   node scripts/eval-llm.mjs --model deepseek-v4-pro
  *   node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen3:8b
- *   node scripts/eval-llm.mjs qwen2.5:7b --base-url http://localhost:11434/v1
+ *   node scripts/eval-llm.mjs deepseek-v4-pro
  *
  * key 只来自运行环境（环境变量 DEEPSEEK_API_KEY，或项目根目录的 .deepseek.key），
  * 脚本里不写死，也不打印。本机 Ollama 不需要 key。
  */
-import { readFileSync } from 'node:fs'
-import { registerHooks } from 'node:module'
-import { fileURLToPath } from 'node:url'
-
-/**
- * 让 node 直接跑 src 里的 TypeScript 源码，不额外引入一套构建。
- *
- * 两处差异要补：src 内部的相对 import 不写扩展名（按 vite 的解析规则写的），
- * node 的 ESM 解析器不认；`lexicon.json` 还需要 import attributes。
- * 一对同步 hook 解决，评测脚本就能跟应用跑同一份代码——这正是它的意义所在。
- */
-registerHooks({
-  resolve(specifier, context, next) {
-    if (specifier.startsWith('.') && !/\.\w+$/.test(specifier)) {
-      try {
-        return next(`${specifier}.ts`, context)
-      } catch {
-        // 加 .ts 也找不到，就交回默认解析，让它报本来该报的错
-      }
-    }
-    const resolved = next(specifier, context)
-    return resolved.url.endsWith('.json')
-      ? { ...resolved, importAttributes: { type: 'json' } }
-      : resolved
-  },
-})
+import './lib/ts-source-hooks.mjs'
+import { readDeepseekKey } from './lib/deepseek.mjs'
 
 // hook 注册之后才能加载源码，所以这里是动态 import
 const { translate, NotMathError } = await import('../src/services/llm.ts')
@@ -62,19 +38,9 @@ if (baseUrl.startsWith('/')) {
   process.exit(1)
 }
 
-function readApiKey() {
-  const fromEnv = process.env.DEEPSEEK_API_KEY?.trim()
-  if (fromEnv) return fromEnv
-  try {
-    return readFileSync(fileURLToPath(new URL('../.deepseek.key', import.meta.url)), 'utf8').trim()
-  } catch {
-    return ''
-  }
-}
-
 const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:|\/|$)/.test(baseUrl)
 // 本地服务不需要凭据，也就不该把 key 递过去——凭据只发给它本来的归属方
-const apiKey = isLocal ? '' : readApiKey()
+const apiKey = isLocal ? '' : readDeepseekKey()
 if (!apiKey && !isLocal) {
   console.error('没有 API key：设环境变量 DEEPSEEK_API_KEY，或把 key 写进项目根目录的 .deepseek.key')
   process.exit(1)

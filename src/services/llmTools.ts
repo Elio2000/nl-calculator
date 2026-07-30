@@ -27,9 +27,20 @@ const READING_PARAM = {
   description: '用一句简短中文复述你把这句话理解成了什么',
 } as const
 
+/**
+ * 向模型**承诺**的函数子集——刻意小于引擎的完整白名单（提示词要短，长尾函数
+ * 模型自己也想不起来用）。方向性约束是唯一铁律：这里承诺的每一个都必须真的
+ * 在 `mathEngine.ALLOWED_FUNCTIONS` 里，反向漂移由契约测试钉死。
+ */
+export const ADVERTISED_FUNCTIONS = [
+  'sqrt', 'cbrt', 'nthRoot', 'abs', 'factorial', 'exp', 'log', 'log10',
+  'sin', 'cos', 'tan', 'asin', 'acos', 'atan', 'sinh', 'cosh', 'tanh',
+  'mod', 'min', 'max',
+] as const
+
 const EXPRESSION_RULES =
   '规范数学表达式。只能用数字、+ - * / ^ ( ) 与这些函数：' +
-  'sqrt cbrt nthRoot abs factorial exp log log10 sin cos tan asin acos atan sinh cosh tanh mod min max；' +
+  `${ADVERTISED_FUNCTIONS.join(' ')}；` +
   '也接受 ln（自然对数）和 lg（常用对数）的写法。常量只有 pi e i。' +
   // 中文习惯里 log 常指常用对数，但引擎里 log 是自然对数——不写明会算错一个数量级
   '**注意 log(x) 是自然对数（以 e 为底），常用对数要写 log10(x)，以 b 为底写 log(x,b)。**' +

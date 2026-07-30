@@ -15,26 +15,10 @@
  * 文法注意：llama.cpp 的 GBNF 解析器按行敏感——规则必须单行、纯 ASCII 注释，
  * 多行续写的备选分支会直接 "failed to parse grammar"（实测踩过）。
  */
+import '../../scripts/lib/ts-source-hooks.mjs'
 import { readFileSync } from 'node:fs'
-import { registerHooks } from 'node:module'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-
-registerHooks({
-  resolve(specifier, context, next) {
-    if (specifier.startsWith('.') && !/\.\w+$/.test(specifier)) {
-      try {
-        return next(`${specifier}.ts`, context)
-      } catch {
-        // 加 .ts 也找不到，就交回默认解析
-      }
-    }
-    const resolved = next(specifier, context)
-    return resolved.url.endsWith('.json')
-      ? { ...resolved, importAttributes: { type: 'json' } }
-      : resolved
-  },
-})
 
 const here = dirname(fileURLToPath(import.meta.url))
 const GRAMMAR = readFileSync(join(here, 'canonical-expr.gbnf'), 'utf8')

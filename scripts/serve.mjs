@@ -16,35 +16,20 @@
  *   ngrok http 4173
  */
 import { createReadStream } from 'node:fs'
-import { readFile, stat } from 'node:fs/promises'
+import { stat } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import path from 'node:path'
 import { Readable } from 'node:stream'
 import { fileURLToPath } from 'node:url'
+import { readDeepseekKey, DEEPSEEK_UPSTREAM } from './lib/deepseek.mjs'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 const DIST = path.join(ROOT, 'dist')
 const PORT = Number(process.env.PORT ?? 4173)
 
-/* ── 凭据 ─────────────────────────────────────────────
- * key 只来自运行环境，绝不出现在代码或仓库里：
- *   1. 环境变量 DEEPSEEK_API_KEY
- *   2. 项目根目录 .deepseek.key（已在 .gitignore）
- * 启动时读一次；换 key 重启即可。
- */
-const UPSTREAM = 'https://api.deepseek.com'
-const API_KEY = await readApiKey()
-
-async function readApiKey() {
-  const fromEnv = process.env.DEEPSEEK_API_KEY?.trim()
-  if (fromEnv) return fromEnv
-  try {
-    // 末尾换行会被原样拼进 Authorization 头，换来一个看不懂的 401，必须 trim
-    return (await readFile(path.join(ROOT, '.deepseek.key'), 'utf8')).trim()
-  } catch {
-    return ''
-  }
-}
+// 凭据与上游地址的唯一出处见 scripts/lib/deepseek.mjs；启动时读一次
+const UPSTREAM = DEEPSEEK_UPSTREAM
+const API_KEY = readDeepseekKey()
 
 /* ── 转发路由的护栏 ───────────────────────────────── */
 
