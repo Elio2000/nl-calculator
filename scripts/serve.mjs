@@ -1,7 +1,7 @@
 /**
  * 生产预览服务器：静态伺服 dist/ + 一条 LLM 转发路由。
  *
- * 用途是把构建产物连同「内置转发」一起端出去（本机跑 + ngrok 打洞给人试用），
+ * 用途是把构建产物连同「内置转发」一起端出去（本机跑 + cloudflared/ngrok 打洞给人试用），
  * 所以它必须同时满足两件事：
  *   1. 面试官打开链接**不用填任何 key** 就能用 AI 归一化
  *   2. 这个临时暴露到公网的洞，不能变成一个任人白嫖的 OpenAI 代理
@@ -13,7 +13,7 @@
  *
  *   npm run build
  *   DEEPSEEK_API_KEY=sk-xxxx npm run serve        # 或把 key 写进 .deepseek.key
- *   ngrok http 4173
+ *   cloudflared tunnel --url http://localhost:4173   # 或 ngrok http 4173
  */
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
