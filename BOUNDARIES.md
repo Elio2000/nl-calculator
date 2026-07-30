@@ -228,14 +228,16 @@ nerdamer 有时返回像 `832040/2178309` 这样的分数，看着像精确解�
 
 ### 转发代理是一条白名单，不是一个通道
 
-默认链路里浏览器不直接碰 DeepSeek，而是请求同源的 `/api/llm`，由服务端补上凭据再转发
-（开发时 `vite.config.ts`，部署时 `scripts/serve.mjs`）。好处是页面里没有 key；代价是这个洞一旦
-经隧道（cloudflared / ngrok）暴露到公网，任何人都能打。所以它只放行必要的那一点点：
+默认链路里浏览器不直接碰上游，而是请求同源的 `/api/llm`（DeepSeek）或 `/api/qwen`
+（服务端本机的 Ollama——远程访客浏览器里的「localhost」是他自己的电脑，只有经转发才用得上
+这台机器的模型），由服务端补上凭据再转发（开发时 `vite.config.ts`，部署时 `scripts/serve.mjs`）。
+好处是页面里没有 key；代价是这个洞一旦经隧道（cloudflared / ngrok）暴露到公网，任何人都能打。
+所以它只放行必要的那一点点：
 
 | 护栏 | 值 | 挡的是什么 |
 |---|---|---|
-| 路径白名单 | 只认 `POST /api/llm/v1/chat/completions` | 其余 `/api/**` 一律 404，不让它长成通用 OpenAI 代理 |
-| 模型白名单 | `model` 必须以 `deepseek` 开头 | 别人拿它去点名调别的贵模型 |
+| 路径白名单 | 只认两条 `POST …/v1/chat/completions`（`/api/llm` 与 `/api/qwen`） | 其余 `/api/**` 一律 404，不让它长成通用 OpenAI 代理 |
+| 模型白名单 | 按路由：`deepseek` 前缀 / `qwen` 前缀 | 别人拿它去点名调别的贵模型 |
 | 请求体上限 | 64KB | 翻译一句中文用不到 1KB |
 | 输出上限 | `max_tokens` 强制 ≤ 4096（没给也补上） | 拿它当写作机 |
 | 请求头 | 服务端**新建**请求头，不继承客户端的 | 浏览器里残留的旧 BYOK key 盖掉服务端凭据 |

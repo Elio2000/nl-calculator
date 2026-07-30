@@ -39,10 +39,13 @@ const PRESETS: Array<{ label: string; baseUrl: string; chatModel: string; hint: 
     hint: '浏览器直连，需要自备 key',
   },
   {
-    label: '本地 Qwen3-8B',
-    baseUrl: 'http://localhost:11434/v1',
+    // 走同源转发而不是 localhost 直连：远程访客浏览器里的「localhost」是
+    // 他自己的电脑，只有经服务端转发才能用上这台机器跑着的 Ollama。
+    // 本机想直连的话，把地址改成 http://localhost:11434/v1 并设 OLLAMA_ORIGINS 即可。
+    label: '内置 Qwen 转发',
+    baseUrl: '/api/qwen/v1',
     chatModel: 'qwen3:8b',
-    hint: '完全离线（Ollama），需设 OLLAMA_ORIGINS；实测 1.5B 档翻译质量不够，8B 起步',
+    hint: '同源转发到服务端本机的 Ollama（qwen3:8b），无需 key；实测 1.5B 档翻译质量不够，8B 起步',
   },
 ]
 

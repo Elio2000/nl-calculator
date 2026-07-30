@@ -63,8 +63,9 @@ interface StoredSettings extends Settings {
  * 环境变量／`.deepseek.key` 里，既不进代码库，也不下发到浏览器。
  *
  * 另外两条链路作为备选，在设置面板里一键切换：
- *   BYOK 直连   `https://api.deepseek.com/v1` + 自己的 key（DeepSeek 允许跨域）
- *   本地 Ollama `http://localhost:11434/v1` + qwen3:8b（完全离线；1.5B 实测 6/14 不够用，已下架）
+ *   BYOK 直连     `https://api.deepseek.com/v1` + 自己的 key（DeepSeek 允许跨域）
+ *   内置 Qwen 转发 `/api/qwen/v1` + qwen3:8b（转发到服务端本机 Ollama；远程访客写
+ *                 localhost 够不到这台机器，所以同样走同源转发。1.5B 实测 6/14 不够用，已下架）
  *
  * 服务不可用时会明确报错并提示改用「不启用」，不会静默失败。
  */

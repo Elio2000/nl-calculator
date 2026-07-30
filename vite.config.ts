@@ -30,24 +30,33 @@ function missingKeyPlugin(): Plugin {
   }
 }
 
-// 没有 key 就不注册代理，请求交给上面那个中间件处理
-const proxy: Record<string, ProxyOptions> | undefined = API_KEY
-  ? {
-      '/api/llm': {
-        target: DEEPSEEK_UPSTREAM,
-        changeOrigin: true,
-        // 只剥掉 /api/llm 这层前缀，/v1/chat/completions 要原样送到上游
-        rewrite: (path) => path.replace(/^\/api\/llm/, ''),
-        configure: (proxy) => {
-          proxy.on('proxyReq', (proxyReq) => {
-            // setHeader 是覆盖：浏览器 localStorage 里若还留着旧的 BYOK key，
-            // 也不会盖掉服务端这把
-            proxyReq.setHeader('Authorization', `Bearer ${API_KEY}`)
-          })
-        },
-      },
-    }
-  : undefined
+const proxy: Record<string, ProxyOptions> = {
+  // 「内置 Qwen 转发」的开发版：转给本机 Ollama，不需要凭据。
+  // 生产版在 scripts/serve.mjs 里带完整护栏，这里保持开发/部署行为一致。
+  '/api/qwen': {
+    target: 'http://localhost:11434',
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/api\/qwen/, ''),
+  },
+  // DeepSeek 转发只在有 key 时注册；没有 key 时交给上面那个中间件回 500
+  ...(API_KEY
+    ? {
+        '/api/llm': {
+          target: DEEPSEEK_UPSTREAM,
+          changeOrigin: true,
+          // 只剥掉 /api/llm 这层前缀，/v1/chat/completions 要原样送到上游
+          rewrite: (path) => path.replace(/^\/api\/llm/, ''),
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq) => {
+              // setHeader 是覆盖：浏览器 localStorage 里若还留着旧的 BYOK key，
+              // 也不会盖掉服务端这把
+              proxyReq.setHeader('Authorization', `Bearer ${API_KEY}`)
+            })
+          },
+        } satisfies ProxyOptions,
+      }
+    : {}),
+}
 
 // https://vite.dev/config/
 export default defineConfig({

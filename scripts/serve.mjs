@@ -33,14 +33,36 @@ const API_KEY = readDeepseekKey()
 
 /* ── 转发路由的护栏 ───────────────────────────────── */
 
-/** 唯一允许转发的路径。多一条都不开。 */
-const LLM_PATH = '/api/llm/v1/chat/completions'
 /** 请求体上限。翻译一句中文用不到 1KB，64KB 已经很宽松了。 */
 const MAX_BODY_BYTES = 64 * 1024
 /** 输出上限。工具调用只有几十个 token，封顶是为了防止有人拿它当写作机。 */
 const MAX_OUTPUT_TOKENS = 4096
-/** 模型白名单：只放行 deepseek 系列。 */
-const MODEL_PREFIX = 'deepseek'
+
+/**
+ * 允许转发的路由，一条一档，多一条都不开；都只认 chat/completions 这一个动作。
+ *
+ * qwen 那条转给**服务端本机**的 Ollama——预设里直接写 localhost 的话，
+ * 远程访客浏览器里的「localhost」是他自己的电脑，永远够不到这台机器的模型。
+ * 经同源转发，访客才能用上这里跑着的 qwen3:8b。
+ */
+const ROUTES = {
+  '/api/llm/v1/chat/completions': {
+    upstream: `${UPSTREAM}/v1/chat/completions`,
+    modelPrefix: 'deepseek',
+    // null 表示缺凭据：直接 500，绝不把没认证的请求送出去挨 401
+    authorization: () => (API_KEY ? `Bearer ${API_KEY}` : null),
+    missingAuthMessage: '服务端未配置 DEEPSEEK_API_KEY',
+    timeoutMs: 60000,
+  },
+  '/api/qwen/v1/chat/completions': {
+    upstream: 'http://localhost:11434/v1/chat/completions',
+    modelPrefix: 'qwen',
+    authorization: () => '', // 本机 Ollama 不需要凭据
+    missingAuthMessage: '',
+    // 本地 8B 是思考模型，冷启动加载 + 思考都慢，比云端宽一倍
+    timeoutMs: 120000,
+  },
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -94,9 +116,10 @@ async function readBody(req, res) {
   return Buffer.concat(chunks).toString('utf8')
 }
 
-/** 转发到 DeepSeek。请求头是**新建的**，不继承客户端的任何一个。 */
-async function handleLlm(req, res) {
-  if (!API_KEY) return fail(res, 500, '服务端未配置 DEEPSEEK_API_KEY')
+/** 转发到上游。请求头是**新建的**，不继承客户端的任何一个。 */
+async function handleLlm(req, res, route) {
+  const auth = route.authorization()
+  if (auth === null) return fail(res, 500, route.missingAuthMessage)
 
   const raw = await readBody(req, res)
   if (raw === null) return
@@ -108,8 +131,8 @@ async function handleLlm(req, res) {
     return fail(res, 400, '请求体不是合法 JSON')
   }
 
-  if (typeof body?.model !== 'string' || !body.model.startsWith(MODEL_PREFIX)) {
-    return fail(res, 400, `只允许 ${MODEL_PREFIX} 系列模型`)
+  if (typeof body?.model !== 'string' || !body.model.startsWith(route.modelPrefix)) {
+    return fail(res, 400, `只允许 ${route.modelPrefix} 系列模型`)
   }
 
   // 客户端给多少都封顶；没给也补上，免得默认值放任长输出
@@ -120,15 +143,15 @@ async function handleLlm(req, res) {
 
   let upstream
   try {
-    upstream = await fetch(`${UPSTREAM}${LLM_PATH.replace('/api/llm', '')}`, {
+    upstream = await fetch(route.upstream, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         // 唯一注入凭据的地方。它不出现在日志里，也不会回到浏览器
-        Authorization: `Bearer ${API_KEY}`,
+        ...(auth ? { Authorization: auth } : {}),
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(60000),
+      signal: AbortSignal.timeout(route.timeoutMs),
     })
   } catch (error) {
     return fail(res, 502, `连不上上游服务：${error.name}`)
@@ -205,11 +228,12 @@ async function isFile(candidate) {
 const server = createServer((req, res) => {
   const pathname = new URL(req.url, 'http://localhost').pathname
 
-  if (pathname === LLM_PATH && req.method === 'POST') {
-    handleLlm(req, res).catch(() => fail(res, 500, '转发时出错'))
+  const route = ROUTES[pathname]
+  if (route && req.method === 'POST') {
+    handleLlm(req, res, route).catch(() => fail(res, 500, '转发时出错'))
     return
   }
-  // /api 下只有那一条路由，其余一律当不存在——别让它长成通用代理
+  // /api 下只有白名单里那几条路由，其余一律当不存在——别让它长成通用代理
   if (pathname.startsWith('/api/')) return fail(res, 404, '没有这个接口')
 
   if (req.method !== 'GET' && req.method !== 'HEAD') return fail(res, 404, '没有这个接口')
@@ -219,7 +243,9 @@ const server = createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`静态目录 ${DIST}`)
-  console.log(`LLM 转发 ${LLM_PATH} → ${UPSTREAM}`)
-  console.log(API_KEY ? '已读到 API key（不打印内容）' : '⚠️  没有 API key，AI 归一化会返回 500')
+  for (const [route, { upstream }] of Object.entries(ROUTES)) {
+    console.log(`LLM 转发 ${route} → ${upstream}`)
+  }
+  console.log(API_KEY ? '已读到 API key（不打印内容）' : '⚠️  没有 API key，DeepSeek 转发会返回 500')
   console.log(`\n  http://localhost:${PORT}\n`)
 })

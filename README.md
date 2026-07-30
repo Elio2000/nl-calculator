@@ -290,7 +290,7 @@ npx vitest run     # 489 个测试
 |---|---|---|---|
 | **内置转发**（默认） | `/api/llm/v1` | `deepseek-v4-flash` | 不用，凭据在服务端 |
 | DeepSeek 直连（BYOK） | `https://api.deepseek.com/v1` | `deepseek-v4-flash` | 自备，只存本机浏览器 |
-| 本地 Qwen3-8B | `http://localhost:11434/v1` | `qwen3:8b` | 不用，需 `OLLAMA_ORIGINS='*' ollama serve` |
+| 内置 Qwen 转发 | `/api/qwen/v1` | `qwen3:8b` | 不用，转发到服务端本机的 Ollama |
 
 <div align="center"><img src="docs/media/settings.png" width="640" alt="设置面板" /></div>
 

@@ -250,6 +250,19 @@ ${TOOLS_AS_TEXT}
 
 只输出 JSON，不要任何解释文字。`
 
+/**
+ * 按后端选超时。
+ *
+ * 云端（DeepSeek）1–3 秒出结果，20 秒足够宽，超了基本就是网断了，快速失败
+ * 让用户早点看到规则引擎的兜底。本地 / 转发的 qwen3 是**思考模型**，
+ * 冷启动要把 5G 权重搬进内存、答题前还要先思考——实测 20 秒必超时，
+ * 界面上就成了「Qwen 一直坏」。这不是网络问题，是模型真的在算，等它。
+ */
+export function timeoutMsFor(baseUrl: string): number {
+  const isLocalBackend = /^\/api\/qwen|^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])/.test(baseUrl)
+  return isLocalBackend ? 120000 : 20000
+}
+
 /** OpenAI 兼容接口，含 Ollama / LM Studio 的 localhost。 */
 async function askEndpoint(
   input: string,
@@ -260,7 +273,7 @@ async function askEndpoint(
   const baseUrl = settings.baseUrl.trim().replace(/\/+$/, '')
   if (!baseUrl) throw new LlmError('还没有填服务地址')
 
-  const timeout = AbortSignal.timeout(20000)
+  const timeout = AbortSignal.timeout(timeoutMsFor(baseUrl))
   const merged = signal ? AbortSignal.any([signal, timeout]) : timeout
 
   let response: Response

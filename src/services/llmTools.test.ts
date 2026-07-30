@@ -6,7 +6,7 @@
  * 之前这条路径零测试覆盖，模型翻译错了只能靠手工发现。
  */
 import { describe, expect, it } from 'vitest'
-import { buildRequest } from './llm'
+import { buildRequest, timeoutMsFor } from './llm'
 import { ADVERTISED_FUNCTIONS, buildToolsPayload, toToolCall, TOOLS } from './llmTools'
 import { ALLOWED_FUNCTIONS } from '../engines/mathEngine'
 import type { Settings } from '../state/settings'
@@ -44,6 +44,14 @@ describe('请求体构造（tools 模式）', () => {
     for (const name of ADVERTISED_FUNCTIONS) {
       expect(ALLOWED_FUNCTIONS.has(name), `承诺了 ${name}，但引擎白名单里没有`).toBe(true)
     }
+  })
+
+  it('超时按后端区分——本地思考模型给 2 分钟，云端 20 秒快速失败', () => {
+    // qwen3 冷启动 + 思考实测超过 20 秒；曾经一刀切 20s，本地档在界面上「一直坏」
+    expect(timeoutMsFor('/api/qwen/v1')).toBe(120000)
+    expect(timeoutMsFor('http://localhost:11434/v1')).toBe(120000)
+    expect(timeoutMsFor('/api/llm/v1')).toBe(20000)
+    expect(timeoutMsFor('https://api.deepseek.com/v1')).toBe(20000)
   })
 
   it('保留 reject 工具——非数学输入要有诚实的出口，而不是硬凑算式', () => {
