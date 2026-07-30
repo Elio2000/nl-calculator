@@ -30,7 +30,7 @@ const READING_PARAM = {
 const EXPRESSION_RULES =
   '规范数学表达式。只能用数字、+ - * / ^ ( ) 与这些函数：' +
   'sqrt cbrt nthRoot abs factorial exp log log10 sin cos tan asin acos atan sinh cosh tanh mod min max；' +
-  '常量只有 pi e i。' +
+  '也接受 ln（自然对数）和 lg（常用对数）的写法。常量只有 pi e i。' +
   // 中文习惯里 log 常指常用对数，但引擎里 log 是自然对数——不写明会算错一个数量级
   '**注意 log(x) 是自然对数（以 e 为底），常用对数要写 log10(x)，以 b 为底写 log(x,b)。**' +
   '必须写显式乘号，每个二元运算都要加括号。不要用百分号——百分之二十写成 (20/100)。'
@@ -149,22 +149,33 @@ export function toToolCall(raw: unknown): ToolCall | ToolRejection | null {
       return { tool: 'reject', why: coerceText(args.why) ?? '这不是一个数学问题' }
     case 'evaluate': {
       const expression = coerceText(args.expression ?? args.equation)
-      return expression ? { tool: 'evaluate', expression } : null
+      return expression ? { tool: 'evaluate', expression: normalizeAliases(expression) } : null
     }
     case 'solve': {
       const raw = coerceText(args.equation ?? args.expression)
       if (!raw) return null
-      const equation = normalizeEquation(raw)
+      const equation = normalizeEquation(normalizeAliases(raw))
       return equation ? { tool: 'solve', equation, variable } : null
     }
     case 'diff':
     case 'integrate': {
       const expression = coerceText(args.expression ?? args.equation)
-      return expression ? { tool, expression, variable } : null
+      return expression ? { tool, expression: normalizeAliases(expression), variable } : null
     }
     default:
       return null
   }
+}
+
+/**
+ * 表面别名 → 规范函数名。ln/lg 是中文使用者和模型都爱写的形态
+ * （词表里对中文输入做了同款映射，这里对模型输出对齐）。
+ * CFG 实验的教训：模型想写 ln 被硬堵时，可能滑进「合法但语义错」的式子——
+ * 把高频别名纳入表面语言、在边界归一到核心语言，比堵住更安全。
+ * 只在 LLM 边界做：引擎本身保持严格，展示层永远只见规范名。
+ */
+export function normalizeAliases(expression: string): string {
+  return expression.replace(/\bln\(/g, 'log(').replace(/\blg\(/g, 'log10(')
 }
 
 /** 数值/布尔也接受，统一转成非空字符串。 */

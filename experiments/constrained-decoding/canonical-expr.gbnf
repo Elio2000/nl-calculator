@@ -1,0 +1,10 @@
+root ::= expr
+expr ::= term (("+" | "-") term)*
+term ::= unary (("*" | "/") unary)*
+unary ::= "-"? power
+power ::= atom ("^" unary)?
+atom ::= number | const | func | "(" expr ")"
+func ::= fname "(" expr ("," expr)? ")"
+fname ::= "sqrt" | "cbrt" | "nthRoot" | "factorial" | "abs" | "exp" | "log10" | "log2" | "log" | "ln" | "lg" | "sinh" | "cosh" | "tanh" | "asin" | "acos" | "atan" | "sin" | "cos" | "tan" | "mod"
+const ::= "pi" | "e" | "i"
+number ::= [0-9]+ ("." [0-9]+)?

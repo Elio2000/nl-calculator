@@ -15,7 +15,7 @@ const settings: Settings = {
   llmProvider: 'endpoint',
   baseUrl: 'http://localhost:11434/v1',
   apiKey: '',
-  chatModel: 'qwen2.5:1.5b',
+  chatModel: 'qwen3:8b',
 }
 
 /** 顶掉网络：返回一次原生 function calling 的响应。 */

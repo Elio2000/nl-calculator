@@ -6,7 +6,7 @@
  *
  *   node scripts/eval-llm.mjs                                        # 默认 DeepSeek + deepseek-v4-flash
  *   node scripts/eval-llm.mjs --model deepseek-v4-pro
- *   node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen2.5:1.5b
+ *   node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen3:8b
  *   node scripts/eval-llm.mjs qwen2.5:7b --base-url http://localhost:11434/v1
  *
  * key 只来自运行环境（环境变量 DEEPSEEK_API_KEY，或项目根目录的 .deepseek.key），

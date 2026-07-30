@@ -220,7 +220,7 @@ Whisper 把「一加一」写成「1加1」完全无害（构式层支持中阿�
 ```bash
 node scripts/eval-llm.mjs                                          # 默认 DeepSeek + deepseek-v4-flash
 node scripts/eval-llm.mjs --model deepseek-v4-pro
-node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen2.5:1.5b
+node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen3:8b
 node scripts/eval-llm.mjs --base-url http://localhost:4999/api/llm/v1 --model deepseek-v4-flash
                                                                    # ↑ 穿过 serve.mjs 的转发代理
 ```

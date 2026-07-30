@@ -234,7 +234,7 @@ npm run dev
 |---|---|---|---|
 | **内置转发**（默认） | `/api/llm/v1` | `deepseek-v4-flash` | **不用**，凭据在服务端 |
 | DeepSeek 直连（BYOK） | `https://api.deepseek.com/v1` | `deepseek-v4-flash` | 要，自备；只存在本机浏览器 |
-| 本地 Ollama | `http://localhost:11434/v1` | `qwen2.5:1.5b` | 不用，但要 `OLLAMA_ORIGINS='*' ollama serve` |
+| 本地 Qwen3-8B | `http://localhost:11434/v1` | `qwen3:8b` | 不用，但要 `OLLAMA_ORIGINS='*' ollama serve` |
 
 直连之所以可行，是因为 DeepSeek 的接口允许跨域；换成不开 CORS 的服务就只能走转发。要更强的模型把模型名换成 `deepseek-v4-pro` 即可。不想用 AI 就在设置里选「不启用」，规则引擎照常工作。
 
@@ -248,7 +248,7 @@ npm run dev
 
 ```bash
 node scripts/eval-llm.mjs                                          # DeepSeek，key 从环境读
-node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen2.5:1.5b
+node scripts/eval-llm.mjs --base-url http://localhost:11434/v1 --model qwen3:8b
 ```
 
 其中最有意思的一条是**语音同音字纠错**——system prompt 里明确告诉模型输入可能来自语音识别，

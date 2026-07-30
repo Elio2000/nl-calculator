@@ -16,7 +16,7 @@ const settings: Settings = {
   llmProvider: 'endpoint',
   baseUrl: 'http://localhost:11434/v1',
   apiKey: '',
-  chatModel: 'qwen2.5:1.5b',
+  chatModel: 'qwen3:8b',
 }
 
 /** tools 模式的请求体一定带工具声明，取出来断言。 */
@@ -205,6 +205,46 @@ describe('畸形方程一律拒绝', () => {
       tool: 'solve',
       equation: 'x^2+1',
       variable: 'x',
+    })
+  })
+})
+
+/**
+ * ln/lg 别名归一。CFG 实验（experiments/）实测：qwen3:8b 想写 ln 被文法堵死时，
+ * 滑进了「合法但丢了对数」的式子——高频别名要纳入表面语言，在边界归一。
+ */
+describe('表面别名在 LLM 边界归一', () => {
+  it('ln → log（自然对数）', () => {
+    expect(toToolCall({ tool: 'evaluate', args: { expression: 'ln(e)' } })).toEqual({
+      tool: 'evaluate',
+      expression: 'log(e)',
+    })
+  })
+
+  it('lg → log10（常用对数）', () => {
+    expect(toToolCall({ tool: 'evaluate', args: { expression: 'lg(100)+lg(10)' } })).toEqual({
+      tool: 'evaluate',
+      expression: 'log10(100)+log10(10)',
+    })
+  })
+
+  it('方程与微积分参数同样归一', () => {
+    expect(toToolCall({ tool: 'solve', args: { equation: 'ln(x)=1', variable: 'x' } })).toEqual({
+      tool: 'solve',
+      equation: 'log(x)-(1)',
+      variable: 'x',
+    })
+    expect(toToolCall({ tool: 'diff', args: { expression: 'ln(x)', variable: 'x' } })).toEqual({
+      tool: 'diff',
+      expression: 'log(x)',
+      variable: 'x',
+    })
+  })
+
+  it('不误伤：blng(x) 这类只是包含 ln 字样的名字不动', () => {
+    expect(toToolCall({ tool: 'evaluate', args: { expression: 'blng(2)' } })).toEqual({
+      tool: 'evaluate',
+      expression: 'blng(2)',
     })
   })
 })

@@ -39,10 +39,10 @@ const PRESETS: Array<{ label: string; baseUrl: string; chatModel: string; hint: 
     hint: '浏览器直连，需要自备 key',
   },
   {
-    label: '本地 Ollama',
+    label: '本地 Qwen3-8B',
     baseUrl: 'http://localhost:11434/v1',
-    chatModel: 'qwen2.5:1.5b',
-    hint: '完全离线，需设 OLLAMA_ORIGINS',
+    chatModel: 'qwen3:8b',
+    hint: '完全离线（Ollama），需设 OLLAMA_ORIGINS；实测 1.5B 档翻译质量不够，8B 起步',
   },
 ]
 
